@@ -4,19 +4,23 @@ Book conference rooms instantly. Built with Next.js, Prisma, NextAuth, Stripe, a
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS v4
-- **Database:** PostgreSQL
-- **ORM:** Prisma 7
-- **Auth:** NextAuth.js v4 (credentials)
-- **Payments:** Stripe
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | PostgreSQL |
+| ORM | Prisma 7 |
+| Auth | NextAuth.js v4 (credentials) |
+| Payments | Stripe |
+| CI | GitHub Actions |
+| Deployment | Vercel |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL database (local or hosted)
 
 ### Setup
@@ -28,8 +32,11 @@ npm install
 # Copy env file and fill in your values
 cp .env.example .env
 
-# Push the schema to your database (or run migrations)
+# Push the schema to your database
 npm run db:push
+
+# Seed the database with demo data
+npm run db:seed
 
 # Start the dev server
 npm run dev
@@ -37,12 +44,19 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Demo Accounts (after seeding)
+
+| Role | Email | Password |
+|---|---|---|
+| Owner | owner@example.com | password123 |
+| Booker | booker@example.com | password123 |
+
 ### Environment Variables
 
 | Variable | Description |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
-| `NEXTAUTH_URL` | App URL (http://localhost:3000 for dev) |
+| `NEXTAUTH_URL` | App URL (`http://localhost:3000` for dev) |
 | `NEXTAUTH_SECRET` | Random secret for NextAuth sessions |
 | `STRIPE_SECRET_KEY` | Stripe secret key (test mode) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (test mode) |
@@ -57,6 +71,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run lint` | Run ESLint |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:push` | Push schema to database |
+| `npm run db:seed` | Seed database with demo data |
 | `npm run db:studio` | Open Prisma Studio |
 
 ## Project Structure
@@ -72,31 +87,39 @@ src/
 │   │   ├── signin/               # Sign in page
 │   │   └── signup/               # Sign up page
 │   ├── dashboard/
-│   │   ├── booker/               # Booker dashboard
-│   │   └── owner/                # Owner dashboard
+│   │   ├── booker/               # Booker dashboard (auth-gated)
+│   │   └── owner/                # Owner dashboard (auth-gated)
 │   ├── rooms/[id]/               # Room detail page
 │   ├── search/                   # Room search page
-│   └── page.tsx                  # Home page
+│   ├── loading.tsx               # Global loading state
+│   ├── not-found.tsx             # 404 page
+│   └── page.tsx                  # Home / landing page
 ├── components/
-│   ├── Navbar.tsx                # Navigation bar
+│   ├── Navbar.tsx                # Responsive navigation bar
 │   └── Providers.tsx             # Session provider wrapper
 ├── lib/
 │   ├── auth.ts                   # NextAuth configuration
 │   ├── prisma.ts                 # Prisma client singleton
-│   └── stripe.ts                 # Stripe client
+│   └── stripe.ts                 # Stripe client (lazy-loaded)
+├── middleware.ts                  # Auth middleware (protects /dashboard/*)
 └── types/
     ├── index.ts                  # Shared types (User, Room, Booking, Payment)
     └── next-auth.d.ts            # NextAuth type extensions
 prisma/
-└── schema.prisma                 # Database schema
+├── schema.prisma                 # Database schema
+└── seed.ts                       # Development seed data
+.github/
+└── workflows/ci.yml              # CI pipeline (lint + type-check + build)
 ```
 
 ## Pages
 
-- `/` — Landing page
-- `/search` — Browse and search conference rooms
-- `/rooms/[id]` — Room detail with booking form
-- `/auth/signin` — Sign in
-- `/auth/signup` — Sign up (booker or owner)
-- `/dashboard/booker` — View your bookings
-- `/dashboard/owner` — Manage your listed rooms
+| Route | Description | Auth Required |
+|---|---|---|
+| `/` | Landing page | No |
+| `/search` | Browse and search rooms | No |
+| `/rooms/[id]` | Room detail with booking form | No |
+| `/auth/signin` | Sign in | No |
+| `/auth/signup` | Sign up (booker or owner) | No |
+| `/dashboard/booker` | View your bookings | Yes |
+| `/dashboard/owner` | Manage your listed rooms | Yes |
